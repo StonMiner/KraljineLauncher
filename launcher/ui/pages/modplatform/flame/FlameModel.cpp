@@ -79,6 +79,7 @@ bool ListModel::setData(const QModelIndex& index, const QVariant& value, [[maybe
     if (pos >= modpacks.size() || pos < 0 || !index.isValid())
         return false;
 
+    Q_ASSERT(value.canConvert<Flame::IndexedPack>());
     modpacks[pos] = value.value<Flame::IndexedPack>();
 
     return true;
@@ -113,7 +114,7 @@ void ListModel::requestLogo(QString logo, QString url)
     job->addNetAction(Net::ApiDownload::makeCached(QUrl(url), entry));
 
     auto fullPath = entry->getFullPath();
-    QObject::connect(job, &NetJob::succeeded, this, [this, logo, fullPath, job] {
+    connect(job, &NetJob::succeeded, this, [this, logo, fullPath, job] {
         job->deleteLater();
         emit logoLoaded(logo, QIcon(fullPath));
         if (waitingCallbacks.contains(logo)) {
@@ -121,7 +122,7 @@ void ListModel::requestLogo(QString logo, QString url)
         }
     });
 
-    QObject::connect(job, &NetJob::failed, this, [this, logo, job] {
+    connect(job, &NetJob::failed, this, [this, logo, job] {
         job->deleteLater();
         emit logoFailed(logo);
     });
@@ -192,8 +193,8 @@ void ListModel::performPaginatedSearch()
     netJob->addNetAction(Net::ApiDownload::makeByteArray(QUrl(searchUrl.value()), response));
     jobPtr = netJob;
     jobPtr->start();
-    QObject::connect(netJob.get(), &NetJob::succeeded, this, &ListModel::searchRequestFinished);
-    QObject::connect(netJob.get(), &NetJob::failed, this, &ListModel::searchRequestFailed);
+    connect(netJob.get(), &NetJob::succeeded, this, &ListModel::searchRequestFinished);
+    connect(netJob.get(), &NetJob::failed, this, &ListModel::searchRequestFailed);
 }
 
 void ListModel::searchWithTerm(const QString& term, int sort, std::shared_ptr<ModFilterWidget::Filter> filter, bool filterChanged)
